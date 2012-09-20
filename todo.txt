@@ -1,0 +1,109 @@
+NEXT RELEASE:
+
+> alternating axis section backgrounds
+
+- Refactor scatter system. User should be able to fill all scatters with a color he likes. (Make example line plot with white-filled circles and a non-white background. Looks good) 
+- add QCP_CHECK_DATA_VALID define to allow checking for NaN/Inf in draw routine (probably not in setData/addData routines because there are too many)
+  and find a good place to document that
+- doc: duplicate QCPAbstractPlottable::rescaleAxes documentation in QCPGraph::rescaleAxes reimplementations. and make cross references between
+  QCustomPlot::/QCPGraph::/QCPAbstractPlottable::rescaleAxes 
+- add doc-note and qDebug output for case when addToLegend (QCPGraph/QCPAbstractPlottable) is called without the plottable being in the plot. 
+- doc: explain ltDateTime mode on axes better. Probably give examples with numbers
+- multiple axes per side, probably leads to complete axis system refactoring
+- Experiment with better styled background, Gradients/patterns. Maybe replace setColor with setBrush or overload setColor to also accept QBrush.
+- restructure tests. Have top level dir "tests" with subdir "manual", "automatic". place current "export test" and "test" into "manual".
+- Ask for permission to add to http://qt-project.org/faq/answer/do_you_provide_a_tool_for_creating_graphs
+
+FUTURE RELEASE:
+
+- Item class based on tracer which adds tag-like labels to points. With option to show x/y values via formatting strings (%key and %value).
+- optimize QCPGraph (and QCPCurve) with improved intersection clip algorithm (keep old algo for timing). QCPGraph will need clipping on left and right
+  only for first and last segment due to the sorted underlying QCPDataMap. Watch out for regression for lsImpulse... (shouldn't happen since we work on raw line data)
+  - increase the intersection rect by mScatterSize
+  - make QCPCurve::drawScatterPlot only draw scatters that are actually in cliprect.
+- unit tests
+- fix selection area for bracket (doesn't adapt to length, probably need style specific algorithms)
+- make demo with TeXGyreTermes axis fonts/text/arrows etc.
+- make type and parent of QCPItemPosition individual for key and value, but keep interface that sets them simultaneously
+- QCPItemPolygon // hide the QCPItemPosition list behind QCPItemPosition &point(i), pointCount(), setPointCount(c) interface.
+- layer visibility
+- maybe adjust getKeyRange on QCPGraph in sdBoth mode to actually use the sorted fashion of map (just look at first and last)
+- think about how to realize splitted axes in the future
+- QCPCandlesticks (http://en.wikipedia.org/wiki/Candlestick_chart)
+- QCPBubbles (x, y, area)
+
+- QCPBars value error bars, print values above bars, maybe print per bar text inside bar (rotated)
+- somehow, range checks must be aware of the scale type used (if that's done, fix the validRange function for log plot 1e-300-1e300)
+- provide a way to set axes ranges with 1:1 ratio (via signals/slots? review setScaleRatio)
+- Data fetcher
+- make drawScatterPlot more efficient
+  In total, we calculate the coordToPixel transformation for the .key and .value
+  three times (for polygon line, for error and for scatter). Maybe provide the
+  polygon data here and make this function aware of at which increments the
+  data points are positioned in the polygon (depends on line style!).
+- Fix for N900 error for pen width 0 (perhaps with Q_OS_SYMBIAN flag in QCPPainter?)
+
+- subplots, maybe as some sort of descendant of QCustomPlot, or an own widget with
+  friend access to QCustomPlot (yeah, do that), which manages multiple internal QCustomPlots, so
+  they don't need to know about eachother.
+
+### axis refactoring:
+
+think about:
+- replace axes system with QList<QCPAxis*> mAxes which handles all axes (and contains by default the four axes xAxes,...) maybe they're undeletable?
+  Or if deletable, set xAxis=0? Yes do that, because xAxis() function wouldn't know what entry in the list is the real x axis etc. and margin calculation etc.
+  When using non-standard axes, margins have to be done manually probably.
+    
+Axes system refactoring:
+- how will range sanitizing/validating work when ScaleType enum is replaced with subclasses? Put the sanitizing/validating in the hands of the respective QCPAxis?
+  -> shouldn't be a big problem, since the sanitizing is only used in QCPAxis methods anyway.
+- QCPAxis abstract base class. To do this, the following extra methods are needed:
+  * void dragRange(QCPRange dragStart, int dragDiffInPixels)
+  * SignDomain validSignDomain()
+- probably export some enums (e.g. SignDomain) to QCP namespace.
+- watch out for externally saved pointers to QCPAxis...
+problem: How to switch between axis types while there are already plottables attached to the axis.
+
+maybe an internal QCPAxisEngine so the axes themselves needn't be replaced?
+problem: how to pass type specific info from generic QCPAxis interface to QCPAxisEngine? Like base in log engine
+ -> maybe expose the engine abstract class and let user typecast it if he needs access to axis type specific options
+it should provide:
+  dragRange
+  pixelToCoord and coordToPixel
+  
+  interface between axis and engine basically is just setting the tick vector, label vector and subtickvector.
+  
+  generateTickVectors
+  generateAutoTicks
+  calculateAutoSubTickCount
+  calculateMargin
+  
+
+possible (abstract?) base class:
+/*
+class QCPAxis : public QObject
+{
+  Q_OBJECT
+  
+  public virtuals:
+  virtual void moveRange(double diff);
+  virtual void dragRange(QCPRange dragStart, int dragPixels);
+  virtual void scaleRange(double factor, double center);
+  virtual double pixelToCoord(double value) const;
+  virtual double coordToPixel(double value) const;
+  virtual SlectablePart selectTest(QPoint pos) const;
+  
+  protected virtuals:
+  virtual void generateTickVectors();
+  pure virtual void generateAutoTicks();
+  virtual int calculateAutoSubTickCount(double tickStep) const;
+  virtual int calculateMargin() const;
+  virtual void drawGrid(QCPPainter *painter);
+  virtual void drawSubGrid(QCPPainter *painter);
+  virtual void drawAxis(QCPPainter *painter);
+  virtual void drawTickLabel(QCPPainter *painter, double position, int distanceToAxis, const QString &text, QSize *tickLabelsSize);
+  virtual void getMaxTickLabelSize(const QFont &font, const QString &text, QSize *tickLabelsSize) const;
+  
+  friend class QCustomPlot;
+};
+*/

@@ -1,0 +1,42 @@
+# OS Related:
+
+*~
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Qt Related:
+
+Build/
+Release/
+Debug/
+*.pro.user
+Makefile*
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+*.log
+*.qch
+*.qm
+*.ts
+
+# Compilation Binaries:
+
+*.o
+*.ar
+*.gz
+*.bz2
+*.xz
+*.tar
+*.a
+*.so
+*.lib
+*.dll
+*.exe
+
+# Other:
+
+*.graphml
+doc/html/*
+doc/qthelp/*
+doc/images/*
