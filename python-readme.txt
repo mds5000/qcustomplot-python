@@ -1,7 +1,7 @@
 Installing on Linux
 ====================
  1. Install packages.
-    sudo apt-get install python-sip-dev pyqt4-dev-tools
+    sudo apt-get install python-sip-dev pyqt4-dev-tools python-qt4-dev
 
  2. Build QCustomPlot Bindings
     - git clone this repository, switch to python branch
